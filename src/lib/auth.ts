@@ -21,6 +21,7 @@ declare module 'next-auth/jwt' {
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || 'campusiq-demo-secret-key-12345',
   session: {
     strategy: 'jwt',
   },
@@ -35,6 +36,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Email and password are required');
+        }
         try {
           const user = await prisma.user.findUnique({
             where: { email: credentials.email },
@@ -60,7 +64,7 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.warn('Database connection failed. Falling back to demo/local authentication session.');
-          if (credentials.email.includes('@') && credentials.password.length >= 8) {
+          if (credentials.email && credentials.email.includes('@') && credentials.password && credentials.password.length >= 8) {
             return {
               id: 'demo-user-id',
               name: 'Manye Gupta',
